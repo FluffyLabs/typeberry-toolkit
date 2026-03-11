@@ -16,6 +16,10 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:install": "playwright install --with-deps",
+    "artifact:upload": "node scripts/upload-artifact.mjs",
+    "artifact:upload:open": "node scripts/upload-artifact.mjs --open",
+    "artifact:worker:dev": "npx wrangler dev --config workers/artifacts-worker/wrangler.toml",
+    "artifact:worker:deploy": "npx wrangler deploy --config workers/artifacts-worker/wrangler.toml",
     "prepare": "husky"
   },
   "dependencies": {

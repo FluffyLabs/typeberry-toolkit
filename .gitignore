@@ -27,3 +27,7 @@ dist-ssr
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Environment files
+.env
+!.env.example

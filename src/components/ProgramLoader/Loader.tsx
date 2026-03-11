@@ -26,14 +26,19 @@ import { getTraceSummary, parseTrace } from "@/lib/host-call-trace";
 
 type LoaderStep = "upload" | "entrypoint";
 
-export const Loader = ({ setIsDialogOpen }: { setIsDialogOpen?: (val: boolean) => void }) => {
-  const dispatch = useAppDispatch();
-  const [programLoad, setProgramLoad] = useState<ProgramUploadFileOutput>();
-  const [error, setError] = useState<string>();
-  const [currentStep, setCurrentStep] = useState<LoaderStep>("upload");
-  const [traceContent, setTraceContent] = useState<string | null>(null);
-  const [traceSummary, setTraceSummary] = useState<ReturnType<typeof getTraceSummary> | null>(null);
+interface LoaderProps {
+  setIsDialogOpen?: (val: boolean) => void;
+  initialProgram?: ProgramUploadFileOutput;
+  initialTrace?: string;
+}
 
+export const Loader = ({ setIsDialogOpen, initialProgram, initialTrace }: LoaderProps) => {
+  const dispatch = useAppDispatch();
+  const [programLoad, setProgramLoad] = useState<ProgramUploadFileOutput | undefined>(initialProgram);
+  const [error, setError] = useState<string>();
+  const [traceContent, setTraceContent] = useState<string | null>(initialTrace ?? null);
+  const [traceSummary, setTraceSummary] = useState<ReturnType<typeof getTraceSummary> | null>(null);
+  const [currentStep, setCurrentStep] = useState<LoaderStep>("upload");
   // Load saved config once on mount
   const savedConfig = loadSpiConfig();
 
@@ -56,10 +61,24 @@ export const Loader = ({ setIsDialogOpen }: { setIsDialogOpen?: (val: boolean) =
     setError("");
   }, [isLoading]);
 
-  // Reset step when program changes
+  // Handle initial trace parsing
   useEffect(() => {
-    setCurrentStep("upload");
-  }, [programLoad]);
+    if (initialTrace) {
+      try {
+        const parsed = parseTrace(initialTrace);
+        setTraceSummary(getTraceSummary(parsed));
+      } catch (e) {
+        console.error("Failed to parse initial trace:", e);
+      }
+    }
+  }, [initialTrace]);
+
+  // Sync initialProgram to programLoad when it changes (e.g., from URL artifact loading)
+  useEffect(() => {
+    if (initialProgram) {
+      setProgramLoad(initialProgram);
+    }
+  }, [initialProgram]);
 
   // Auto-switch to RAW mode when a trace is loaded
   useEffect(() => {
@@ -220,6 +239,22 @@ export const Loader = ({ setIsDialogOpen }: { setIsDialogOpen?: (val: boolean) =
   const handleBackStep = () => {
     setCurrentStep("upload");
   };
+
+  // Handle initialProgram changes (from URL artifact loading)
+  useEffect(() => {
+    if (!initialProgram) return;
+
+    const isSpi = initialProgram.spiProgram !== null && initialProgram.spiProgram !== undefined;
+    const hasTrace = initialTrace !== undefined;
+
+    if (!isSpi || hasTrace) {
+      // Non-SPI or has trace: auto-load immediately
+      handleLoad(initialProgram);
+    } else {
+      // SPI without trace: switch to entrypoint step for user to select
+      setCurrentStep("entrypoint");
+    }
+  }, [initialProgram, initialTrace]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col w-full h-full bg-card pb-3 min-w-[50vw]">

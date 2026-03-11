@@ -19,6 +19,43 @@ There are few ways how you can add your own PVM to execute the code.
 
 Details about the API requirements can be found in [#81](https://github.com/FluffyLabs/pvm-debugger/issues/81)
 
+## Large Program Links (Artifacts)
+
+For large binaries (too large for `?program=0x...` URL payloads), use the Cloudflare artifact worker in
+[`workers/artifacts-worker`](./workers/artifacts-worker).
+
+The debugger can load `?artifact=<id-or-url>` from `/load`. Set up your environment:
+
+```bash
+cp .env.example .env
+```
+
+This configures `VITE_ARTIFACTS_BASE_URL=https://pvm-artifacts.tomusdrw-cloudflare.workers.dev`.
+
+Programmatic upload helper:
+
+```bash
+npm run artifact:upload -- \
+  --file ./path/to/program.bin \
+  --worker https://pvm-artifacts.tomusdrw-cloudflare.workers.dev \
+  --debugger http://localhost:5173
+```
+
+This prints the returned `artifactId` and a ready-to-open debugger link:
+
+```text
+http://localhost:5173/#/load?artifact=<artifactId>
+```
+
+Upload and open the debugger automatically:
+
+```bash
+npm run artifact:upload:open -- \
+  --file ./path/to/program.bin \
+  --worker https://pvm-artifacts.tomusdrw-cloudflare.workers.dev \
+  --debugger http://localhost:5173
+```
+
 ## Development
 
 ### Requirements

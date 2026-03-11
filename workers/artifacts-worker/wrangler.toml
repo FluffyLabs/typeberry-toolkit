@@ -1,0 +1,64 @@
+name = "pvm-artifacts"
+main = "src/index.ts"
+compatibility_date = "2026-03-06"
+
+# ============================================================================
+# R2 Storage
+# ============================================================================
+
+[[r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "pvm-artifacts"
+
+# ============================================================================
+# Native Rate Limiting (Cloudflare-managed)
+# ============================================================================
+
+# Upload rate limiter: 10 requests per minute per IP
+[[unsafe.bindings]]
+name = "UPLOAD_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
+# Download rate limiter: 60 requests per minute per IP
+[[unsafe.bindings]]
+name = "DOWNLOAD_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 60, period = 60 }
+
+# ============================================================================
+# Migrations (remove old Durable Object from previous version)
+# ============================================================================
+
+[[migrations]]
+tag = "v2"
+deleted_classes = ["RateLimiter"]
+
+# ============================================================================
+# Scheduled Cleanup (runs every hour)
+# ============================================================================
+
+[triggers]
+crons = ["0 * * * *"]
+
+# ============================================================================
+# Environment Variables
+# ============================================================================
+
+[vars]
+# TTL Configuration (max 48 hours enforced in code)
+ARTIFACT_TTL_SECONDS = "172800"         # Default: 48 hours
+MAX_ARTIFACT_TTL_SECONDS = "172800"    # Max: 48 hours (hard cap)
+MAX_ARTIFACT_SIZE_BYTES = "1048576"    # 1 MB
+
+# Public URL for artifact downloads
+PUBLIC_BASE_URL = "https://pvm-artifacts.tomusdrw-cloudflare.workers.dev"
+
+# CORS: Restrict to allowed origins (comma-separated)
+# ALLOWED_ORIGINS = "https://pvm.fluffylabs.dev,http://localhost:5173"
+
+# Kill switch: Set to "true" to immediately disable the service
+# Can also be set via: wrangler secret put USAGE_KILL_SWITCH
+# USAGE_KILL_SWITCH = "false"
