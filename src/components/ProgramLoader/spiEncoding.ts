@@ -46,11 +46,11 @@ export function encodeAccumulateParams(params: AccumulateParams): Uint8Array {
 
 export function encodeIsAuthorizedParams(params: IsAuthorizedParams): Uint8Array {
   const isAuthorizedDescriptor = codec.codec.object({
-    core: codec.codec.varU32,
+    core: codec.codec.u16,
   });
 
   const data = {
-    core: numbers.tryAsU32(parseInt(params.core, 10) || 0),
+    core: numbers.tryAsU16(parseInt(params.core, 10) || 0),
   };
 
   return codec.Encoder.encodeObject(isAuthorizedDescriptor, data).raw;
